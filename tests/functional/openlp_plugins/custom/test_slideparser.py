@@ -57,3 +57,32 @@ class TestSlideParser(TestCase):
         )
 
         assert expected == parse_structured_custom_text(source_text)
+
+    def test_parse_structured_custom_text_keeps_year_in_date_label(self):
+        """
+        Dates with a year should be parsed and keep the year in the output label.
+        """
+        source_text = (
+            '04.04.25 OPEN DOORS Gebetsabend für verfolgte Christen (Kamp 43, PB)\n'
+            '04.04.25, 19:00 Uhr Bibelkunde Intensiv (Paderborn)\n'
+        )
+        expected = (
+            '{st}04.04.25{/st}\n'
+            '{b}OPEN DOORS Gebetsabend für verfolgte Christen{/b} Kamp 43, PB\n\n'
+            '{st}04.04.25, 19:00 Uhr:{/st}\n'
+            '{b}Bibelkunde Intensiv{/b} Paderborn'
+        )
+
+        assert expected == parse_structured_custom_text(source_text)
+
+    def test_parse_structured_custom_text_formats_date_with_time(self):
+        """
+        Dates in day.month., time format should be parsed into a slide title block.
+        """
+        source_text = '07.03., 10:30 Uhr Gottesdienst (Paderborn)\n'
+        expected = (
+            '{st}07.03., 10:30 Uhr:{/st}\n'
+            '{b}Gottesdienst{/b} Paderborn'
+        )
+
+        assert expected == parse_structured_custom_text(source_text)

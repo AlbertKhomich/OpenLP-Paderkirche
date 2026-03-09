@@ -26,7 +26,7 @@ import re
 
 
 EVENT_LINE_RE = re.compile(
-    r'^(?P<label>\d{1,2}\.\d{1,2}\.(?:,\s*(?:ab\s+)?\d{1,2}:\d{2}\s*Uhr)?)\s+(?P<body>.+)$'
+    r'^(?P<label>\d{1,2}\.\d{1,2}\.(?:\d{2,4}\.?)?(?:,\s*(?:ab\s+)?\d{1,2}:\d{2}\s*Uhr)?)\s+(?P<body>.+)$'
 )
 LOCATION_RE = re.compile(r'^(?P<title>.+?)\s*\((?P<location>[^()]*)\)\s*$')
 
