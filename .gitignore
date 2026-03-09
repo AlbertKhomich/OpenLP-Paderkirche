@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Test and coverage artifacts
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+
+# Static analysis caches
+.mypy_cache/
+.ruff_cache/
+
+# Editor settings and swap files
+.idea/
+.vscode/
+.python-version
+*.swp
+*.swo
+*~
+
+# Local OpenLP runtime data copied into this repo
+/OpenLP Daten/
+/OpenLP Daten.zip
