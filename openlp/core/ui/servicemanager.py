@@ -117,6 +117,14 @@ class Ui_ServiceManager(object):
                                         icon=':/general/general_save.png',
                                         tooltip=translate('OpenLP.ServiceManager', 'Save this service.'),
                                         triggers=self.decide_save_method)
+        self.agenda_button = QtWidgets.QToolButton(self.toolbar)
+        self.agenda_button.setObjectName('agenda_button')
+        self.agenda_button.setText('A')
+        self.agenda_button.setAutoRaise(True)
+        self.agenda_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        self.agenda_button.setToolTip(translate('OpenLP.ServiceManager', 'Open the agenda builder.'))
+        self.agenda_button.clicked.connect(self.on_open_agenda_builder)
+        self.toolbar.add_toolbar_widget(self.agenda_button)
         self.toolbar.addSeparator()
         self.theme_label = QtWidgets.QLabel('%s:' % UiStrings().Theme, widget)
         self.theme_label.setContentsMargins(3, 3, 3, 3)
@@ -1217,6 +1225,13 @@ class ServiceManager(OpenLPMixin, RegistryMixin, QtWidgets.QWidget, Ui_ServiceMa
             self.service_items.remove(self.service_items[item])
             self.repaint_service_list(item - 1, -1)
             self.set_modified()
+
+    def on_open_agenda_builder(self, field=None):
+        """
+        Open the agenda builder dialog.
+        """
+        from openlp.core.ui.agendabuilderdialog import AgendaBuilderDialog
+        AgendaBuilderDialog(self, self).exec()
 
     def repaint_service_list(self, service_item, service_item_child):
         """
