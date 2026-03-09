@@ -36,16 +36,20 @@ class Ui_CustomSlideEditDialog(object):
         self.slide_text_edit = SpellTextEdit(self)
         self.slide_text_edit.setObjectName('slide_text_edit')
         self.dialog_layout.addWidget(self.slide_text_edit)
+        self.parse_button = create_button(custom_slide_edit_dialog, 'parseButton')
         self.split_button = create_button(custom_slide_edit_dialog, 'splitButton', icon=':/general/general_add.png')
         self.insert_button = create_button(custom_slide_edit_dialog, 'insertButton',
                                            icon=':/general/general_add.png')
         self.button_box = create_button_box(custom_slide_edit_dialog, 'button_box', ['cancel', 'save'],
-                                            [self.split_button, self.insert_button])
+                                            [self.parse_button, self.split_button, self.insert_button])
         self.dialog_layout.addWidget(self.button_box)
         self.retranslateUi(custom_slide_edit_dialog)
 
     def retranslateUi(self, custom_slide_edit_dialog):
         custom_slide_edit_dialog.setWindowTitle(translate('CustomPlugin.EditVerseForm', 'Edit Slide'))
+        self.parse_button.setText(translate('CustomPlugin.EditCustomForm', 'Parse'))
+        self.parse_button.setToolTip(translate('CustomPlugin.EditCustomForm',
+                                               'Parse structured text into this slide.'))
         self.split_button.setText(UiStrings().Split)
         self.split_button.setToolTip(UiStrings().SplitToolTip)
         self.insert_button.setText(translate('CustomPlugin.EditCustomForm', 'Insert Slide'))

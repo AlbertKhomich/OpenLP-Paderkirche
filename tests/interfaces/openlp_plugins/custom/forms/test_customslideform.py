@@ -85,3 +85,15 @@ class TestEditCustomSlideForm(TestCase, TestMixin):
 
             # THEN: The dialog should have focus.
             mocked_set_focus.assert_called_with()
+
+    def parse_button_test(self):
+        """
+        Test that parsing structured text replaces the current slide text.
+        """
+        self.form.custom_slide_parser_form.exec = MagicMock(return_value=QtWidgets.QDialog.Accepted)
+        self.form.custom_slide_parser_form.get_parsed_text = MagicMock(return_value='PARSED SLIDE TEXT')
+
+        self.form.on_parse_button_clicked()
+
+        assert self.form.slide_text_edit.toPlainText() == 'PARSED SLIDE TEXT', \
+            'The parsed text should replace the current slide text.'

@@ -24,6 +24,9 @@ import logging
 
 from PyQt5 import QtCore, QtWidgets
 
+from openlp.core.common import translate
+from openlp.core.lib.ui import critical_error_message_box
+from .customslideparserform import CustomSlideParserForm
 from .editcustomslidedialog import Ui_CustomSlideEditDialog
 
 log = logging.getLogger(__name__)
@@ -41,7 +44,9 @@ class EditCustomSlideForm(QtWidgets.QDialog, Ui_CustomSlideEditDialog):
         """
         super(EditCustomSlideForm, self).__init__(parent, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
         self.setupUi(self)
+        self.custom_slide_parser_form = CustomSlideParserForm(self)
         # Connecting signals and slots
+        self.parse_button.clicked.connect(self.on_parse_button_clicked)
         self.insert_button.clicked.connect(self.on_insert_button_clicked)
         self.split_button.clicked.connect(self.on_split_button_clicked)
 
@@ -75,6 +80,19 @@ class EditCustomSlideForm(QtWidgets.QDialog, Ui_CustomSlideEditDialog):
         """
         self.insert_single_line_text_at_cursor('[---]')
         self.slide_text_edit.setFocus()
+
+    def on_parse_button_clicked(self):
+        """
+        Open the parser dialog and replace the current slide text with the parsed output.
+        """
+        if self.custom_slide_parser_form.exec() == QtWidgets.QDialog.Accepted:
+            parsed_text = self.custom_slide_parser_form.get_parsed_text().strip()
+            if not parsed_text:
+                critical_error_message_box(
+                    message=translate('CustomPlugin.CustomSlideParser', 'Please enter text to parse.')
+                )
+                return
+            self.set_text(parsed_text)
 
     def insert_single_line_text_at_cursor(self, text):
         """
