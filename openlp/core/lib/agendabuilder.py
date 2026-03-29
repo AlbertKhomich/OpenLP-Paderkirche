@@ -138,6 +138,33 @@ def _extract_song_title(description):
     return _normalise_text(title.strip(' -\t'))
 
 
+def _collapse_repeated_song_title(title):
+    """
+    Collapse duplicated song titles like ``A - A`` or ``A - B - A - B``.
+    """
+    parts = [part.strip() for part in title.split(' - ')]
+    if len(parts) < 2 or len(parts) % 2 != 0:
+        return title
+    midpoint = len(parts) // 2
+    first_half = [_normalise_text(part).casefold() for part in parts[:midpoint]]
+    second_half = [_normalise_text(part).casefold() for part in parts[midpoint:]]
+    if first_half == second_half:
+        return ' - '.join(parts[:midpoint]).strip()
+    return title
+
+
+def _get_song_search_titles(title):
+    """
+    Return song title candidates, preferring exact matches before de-duplicated fallbacks.
+    """
+    title = _normalise_text(title)
+    search_titles = [title]
+    collapsed_title = _collapse_repeated_song_title(title)
+    if collapsed_title and collapsed_title.casefold() != title.casefold():
+        search_titles.append(_normalise_text(collapsed_title))
+    return search_titles
+
+
 def _extract_colon_value(text):
     """
     Return the text behind the first colon.
@@ -307,25 +334,27 @@ class AgendaBuilder(object):
         """
         Find the first matching song by title.
         """
-        title = _normalise_text(title)
         from openlp.plugins.songs.lib import clean_string
         from openlp.plugins.songs.lib.db import Song
 
-        lower_title = title.lower()
-        search_title = clean_string(title)
-        songs = plugin.manager.get_all_objects(
-            Song,
-            or_(
-                Song.search_title == search_title,
-                func.lower(Song.title) == lower_title,
-                func.lower(Song.alternate_title) == lower_title
-            ),
-            order_by_ref=Song.id
-        )
-        for song in songs:
-            if song.title and song.title.lower() == lower_title:
-                return song
-        return songs[0] if songs else None
+        for search_title_value in _get_song_search_titles(title):
+            lower_title = search_title_value.lower()
+            search_title = clean_string(search_title_value)
+            songs = plugin.manager.get_all_objects(
+                Song,
+                or_(
+                    Song.search_title == search_title,
+                    func.lower(Song.title) == lower_title,
+                    func.lower(Song.alternate_title) == lower_title
+                ),
+                order_by_ref=Song.id
+            )
+            for song in songs:
+                if song.title and song.title.lower() == lower_title:
+                    return song
+            if songs:
+                return songs[0]
+        return None
 
     @staticmethod
     def _find_custom_slide(plugin, title):

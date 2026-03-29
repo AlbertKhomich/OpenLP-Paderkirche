@@ -25,7 +25,7 @@ Tests for agenda parsing helpers.
 import unittest
 from unittest.mock import MagicMock
 
-from openlp.core.lib.agendabuilder import AgendaEntry, normalise_custom_title, parse_agenda_text
+from openlp.core.lib.agendabuilder import AgendaEntry, _get_song_search_titles, normalise_custom_title, parse_agenda_text
 
 
 class TestAgendaBuilder(unittest.TestCase):
@@ -77,6 +77,20 @@ class TestAgendaBuilder(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual(AgendaEntry.Bible, entries[0].entry_type)
         self.assertEqual('Markus 2:23-3:6', entries[0].value)
+        self.assertEqual([], ignored)
+
+    def test_get_song_search_titles_adds_collapsed_duplicate_fallback(self):
+        """
+        Repeated song titles should add a collapsed fallback search term.
+        """
+        entries, ignored = parse_agenda_text('Lied: Herr, wohin sonst - Herr, wohin sonst - Aktive Songs\n')
+
+        self.assertEqual(1, len(entries))
+        self.assertEqual(AgendaEntry.Song, entries[0].entry_type)
+        self.assertEqual(
+            ['Herr, wohin sonst - Herr, wohin sonst', 'Herr, wohin sonst'],
+            _get_song_search_titles(entries[0].value)
+        )
         self.assertEqual([], ignored)
 
     def test_normalise_custom_title_strips_numeric_prefix(self):
