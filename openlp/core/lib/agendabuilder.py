@@ -37,7 +37,9 @@ log = logging.getLogger(__name__)
 AGENDA_LINE_RE = re.compile(r'^\s*(\d{1,2}:\d{2})\s+(\d{1,2}:\d{2})\s+(.*?)\s*$')
 CUSTOM_TITLE_PREFIX_RE = re.compile(r'^\d+\s*-\s*')
 BIBLE_BODY_RE = re.compile(r'^(?P<book>.+?)\s+(?P<body>\d.*)$')
-BIBLE_CHAPTER_VERSE_RE = re.compile(r'(^|[-\u00AD\u2010\u2011\u2012\u2014\u2015\u2212\uFE63\uFF0D])\s*(\d+),(\d+)')
+BIBLE_DASH_CHARS = r'-\u00AD\u2010\u2011\u2012\u2014\u2015\u2212\uFE63\uFF0D'
+BIBLE_INITIAL_CHAPTER_VERSE_RE = re.compile(r'^\s*(\d+),(\d+)')
+BIBLE_CROSS_CHAPTER_VERSE_RE = re.compile(r'([%s])\s*(\d+),(\d+)(?=\s*(?:$|,))' % BIBLE_DASH_CHARS)
 
 
 class AgendaEntry(object):
@@ -200,7 +202,9 @@ def _normalise_bible_reference(reference):
     else:
         book = ''
         body = reference
-    body = BIBLE_CHAPTER_VERSE_RE.sub(r'\1\2:\3', body)
+    body = BIBLE_INITIAL_CHAPTER_VERSE_RE.sub(r'\1:\2', body)
+    # Keep list separators like ``15:3-5,20-26`` intact while still normalising ``2,23-3,6``.
+    body = BIBLE_CROSS_CHAPTER_VERSE_RE.sub(r'\1\2:\3', body)
     if book:
         return '%s %s' % (book, body)
     return body

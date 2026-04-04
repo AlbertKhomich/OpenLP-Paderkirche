@@ -79,6 +79,17 @@ class TestAgendaBuilder(unittest.TestCase):
         self.assertEqual('Markus 2:23-3:6', entries[0].value)
         self.assertEqual([], ignored)
 
+    def test_parse_agenda_text_keeps_same_chapter_bible_lists(self):
+        """
+        Same-chapter Bible list separators should remain commas after the initial verse reference.
+        """
+        entries, ignored = parse_agenda_text('11:00\t0:03\tTextlesung: 1.Korinther 15:3-5,20-26,42-44,50-57\n')
+
+        self.assertEqual(1, len(entries))
+        self.assertEqual(AgendaEntry.Bible, entries[0].entry_type)
+        self.assertEqual('1.Korinther 15:3-5,20-26,42-44,50-57', entries[0].value)
+        self.assertEqual([], ignored)
+
     def test_get_song_search_titles_adds_collapsed_duplicate_fallback(self):
         """
         Repeated song titles should add a collapsed fallback search term.
