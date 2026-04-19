@@ -183,6 +183,30 @@ def _normalise_text(text):
     return unicodedata.normalize('NFC', text.strip())
 
 
+def _normalise_song_search_title(title):
+    """
+    Normalise a song title using the Songs plugin search rules.
+    """
+    from openlp.plugins.songs.lib import clean_string
+
+    return clean_string(_normalise_text(title))
+
+
+def _song_title_matches(song_title, title, search_title=None):
+    """
+    Match song titles exactly, while ignoring punctuation differences used by song search.
+    """
+    if not song_title:
+        return False
+    song_title = _normalise_text(song_title)
+    title = _normalise_text(title)
+    if song_title.casefold() == title.casefold():
+        return True
+    if search_title is None:
+        search_title = _normalise_song_search_title(title)
+    return _normalise_song_search_title(song_title) == search_title
+
+
 def normalise_custom_title(text):
     """
     Normalise custom slide titles and ignore leading numeric prefixes like ``0 -``.
@@ -338,23 +362,25 @@ class AgendaBuilder(object):
         """
         Find the first matching song by title.
         """
-        from openlp.plugins.songs.lib import clean_string
         from openlp.plugins.songs.lib.db import Song
 
         for search_title_value in _get_song_search_titles(title):
             lower_title = search_title_value.lower()
-            search_title = clean_string(search_title_value)
+            search_title = _normalise_song_search_title(search_title_value)
             songs = plugin.manager.get_all_objects(
                 Song,
                 or_(
-                    Song.search_title == search_title,
+                    Song.search_title.like(search_title + '@%'),
+                    Song.search_title.like('%@' + search_title),
                     func.lower(Song.title) == lower_title,
                     func.lower(Song.alternate_title) == lower_title
                 ),
                 order_by_ref=Song.id
             )
             for song in songs:
-                if song.title and song.title.lower() == lower_title:
+                if _song_title_matches(song.title, search_title_value, search_title):
+                    return song
+                if _song_title_matches(song.alternate_title, search_title_value, search_title):
                     return song
             if songs:
                 return songs[0]

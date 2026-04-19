@@ -25,10 +25,14 @@ Helpers for parsing structured event text into custom slide markup.
 import re
 
 
-EVENT_LINE_RE = re.compile(
-    r'^(?P<label>\d{1,2}\.\d{1,2}\.(?:\d{2,4}\.?)?(?:,\s*(?:ab\s+)?\d{1,2}:\d{2}\s*Uhr)?)\s+(?P<body>.+)$'
-)
+DATE_PART_RE = r'\d{1,2}\.\d{1,2}\.(?:\d{2,4}\.?)?'
+TIME_PART_RE = r'(?:ab\s+)?\d{1,2}:\d{2}\s*Uhr'
+DATE_LABEL_RE = r'%s(?:,\s*%s)?' % (DATE_PART_RE, TIME_PART_RE)
+WEEKDAY_PREFIX_RE = r'[A-Za-zÄÖÜäöü]{1,10}\.,?'
+WEEKDAY_LABEL_RE = r'%s(?:\s+%s(?:,?\s+%s)?|\s+%s)' % (WEEKDAY_PREFIX_RE, DATE_PART_RE, TIME_PART_RE, TIME_PART_RE)
+EVENT_LINE_RE = re.compile(r'^(?P<label>(?:%s|%s))(?:\s+(?P<body>.+))?$' % (DATE_LABEL_RE, WEEKDAY_LABEL_RE))
 LOCATION_RE = re.compile(r'^(?P<title>.+?)\s*\((?P<location>[^()]*)\)\s*$')
+LOCATION_ONLY_RE = re.compile(r'^\((?P<location>[^()]*)\)\s*$')
 
 
 def parse_structured_custom_text(text):
@@ -62,18 +66,26 @@ def _format_event_block(label, body):
     """
     Format an event block with optional location details.
     """
-    title, location = _split_location(body)
-    label_text = '%s:' % label if ',' in label else label
-    body_text = '{b}%s{/b}' % title
-    if location:
-        body_text = '%s %s' % (body_text, location)
-    return '{st}%s{/st}\n%s' % (label_text, body_text)
+    title, location = _split_location(body or '')
+    label_text = '%s:' % label if 'Uhr' in label else label
+    if title:
+        body_text = '{b}%s{/b}' % title
+        if location:
+            body_text = '%s %s' % (body_text, location)
+    else:
+        body_text = location
+    if body_text:
+        return '{st}%s{/st}\n%s' % (label_text, body_text)
+    return '{st}%s{/st}' % label_text
 
 
 def _split_location(text):
     """
     Split a title from a trailing parenthesized location.
     """
+    match = LOCATION_ONLY_RE.match(text)
+    if match:
+        return '', match.group('location').strip()
     match = LOCATION_RE.match(text)
     if match:
         return match.group('title').strip(), match.group('location').strip()

@@ -25,7 +25,13 @@ Tests for agenda parsing helpers.
 import unittest
 from unittest.mock import MagicMock
 
-from openlp.core.lib.agendabuilder import AgendaEntry, _get_song_search_titles, normalise_custom_title, parse_agenda_text
+from openlp.core.lib.agendabuilder import (
+    AgendaEntry,
+    _get_song_search_titles,
+    _song_title_matches,
+    normalise_custom_title,
+    parse_agenda_text
+)
 
 
 class TestAgendaBuilder(unittest.TestCase):
@@ -103,6 +109,14 @@ class TestAgendaBuilder(unittest.TestCase):
             _get_song_search_titles(entries[0].value)
         )
         self.assertEqual([], ignored)
+
+    def test_song_title_matches_ignore_punctuation(self):
+        """
+        Song lookup should treat punctuation-only differences like the songs title search does.
+        """
+        self.assertTrue(
+            _song_title_matches('Jesus, Herr, ich denke an dein Opfer', 'Jesus Herr ich denke an dein Opfer')
+        )
 
     def test_normalise_custom_title_strips_numeric_prefix(self):
         """

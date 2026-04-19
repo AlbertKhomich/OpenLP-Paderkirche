@@ -86,3 +86,49 @@ class TestSlideParser(TestCase):
         )
 
         assert expected == parse_structured_custom_text(source_text)
+
+    def test_parse_structured_custom_text_formats_weekday_events_without_dates(self):
+        """
+        Weekday-based events without a calendar date should still be parsed as event blocks.
+        """
+        source_text = (
+            'Kleingruppen\n'
+            'So., 10:30 Uhr (Deelenhaus, Krämerstraße 8-10)\n'
+            'Mt., 19:30 Uhr Gebet (am Kamp 43)\n'
+            'Mi., 18:30 Uhr Jungschar ?\n'
+        )
+        expected = (
+            '{st}{/st}\n'
+            '{b}Kleingruppen{/b}\n\n'
+            '{st}So., 10:30 Uhr:{/st}\n'
+            'Deelenhaus, Krämerstraße 8-10\n\n'
+            '{st}Mt., 19:30 Uhr:{/st}\n'
+            '{b}Gebet{/b} am Kamp 43\n\n'
+            '{st}Mi., 18:30 Uhr:{/st}\n'
+            '{b}Jungschar ?{/b}'
+        )
+
+        assert expected == parse_structured_custom_text(source_text)
+
+    def test_parse_structured_custom_text_formats_weekday_date_labels(self):
+        """
+        Weekday labels should support an added date, with or without a time.
+        """
+        source_text = (
+            'So., 10.04. 10:30 Uhr Gottesdienst (Paderborn)\n'
+            'So., 10.04.26 10:30 Uhr Taufgottesdienst (Deelenhaus)\n'
+            'So., 10.04. Bibelstunde (Kamp 43)\n'
+            'So., 10.04.26 Jugendabend\n'
+        )
+        expected = (
+            '{st}So., 10.04. 10:30 Uhr:{/st}\n'
+            '{b}Gottesdienst{/b} Paderborn\n\n'
+            '{st}So., 10.04.26 10:30 Uhr:{/st}\n'
+            '{b}Taufgottesdienst{/b} Deelenhaus\n\n'
+            '{st}So., 10.04.{/st}\n'
+            '{b}Bibelstunde{/b} Kamp 43\n\n'
+            '{st}So., 10.04.26{/st}\n'
+            '{b}Jugendabend{/b}'
+        )
+
+        assert expected == parse_structured_custom_text(source_text)
