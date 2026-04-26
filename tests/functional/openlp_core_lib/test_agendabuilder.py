@@ -23,12 +23,14 @@
 Tests for agenda parsing helpers.
 """
 import unittest
+from datetime import date
 from unittest.mock import MagicMock
 
 from openlp.core.lib.agendabuilder import (
     AgendaEntry,
     _get_song_search_titles,
     _song_title_matches,
+    get_weekly_info_slide_text,
     normalise_custom_title,
     parse_agenda_text
 )
@@ -162,6 +164,46 @@ class TestAgendaBuilder(unittest.TestCase):
         service_item = builder._build_bible_service_item('Markus 4:1-20')
 
         self.assertEqual('PK Textlesung', service_item.theme)
+
+    def test_weekly_info_slide_text_uses_even_week_content(self):
+        """
+        Even ISO calendar weeks should use the Jungschar and Kleingruppen info.
+        """
+        text = get_weekly_info_slide_text(date(2026, 4, 20))
+
+        self.assertIn('{st}Mi., 18:30 Uhr:{/st}', text)
+        self.assertIn('{b}Jungschar{/b}', text)
+        self.assertIn('{b}Kleingruppen{/b}', text)
+        self.assertNotIn('Gebet', text)
+
+    def test_weekly_info_slide_text_uses_odd_week_content(self):
+        """
+        Odd ISO calendar weeks should use the prayer meeting info.
+        """
+        text = get_weekly_info_slide_text(date(2026, 4, 27))
+
+        self.assertIn('{st}Mi., 19:30 Uhr:{/st}', text)
+        self.assertIn('{b}Gebet{/b} am Kamp 43', text)
+        self.assertNotIn('Jungschar', text)
+
+    def test_weekly_info_service_item_replaces_template_text(self):
+        """
+        The weekly info item should keep the DB-backed custom item but replace its slide content.
+        """
+        from openlp.core.lib.agendabuilder import AgendaBuilder
+
+        builder = AgendaBuilder(MagicMock())
+        service_item = MagicMock()
+        service_item._raw_frames = [{'raw_slide': 'Template'}]
+        builder._build_custom_service_item = MagicMock(return_value=service_item)
+
+        returned_item = builder._build_weekly_info_service_item()
+
+        self.assertEqual(service_item, returned_item)
+        builder._build_custom_service_item.assert_called_once_with('Termine und Infos 2 Seite')
+        self.assertEqual([], service_item._raw_frames)
+        service_item.add_from_text.assert_called_once()
+        self.assertIn('Gottesdienst', service_item.add_from_text.call_args[0][0])
 
 
 if __name__ == '__main__':

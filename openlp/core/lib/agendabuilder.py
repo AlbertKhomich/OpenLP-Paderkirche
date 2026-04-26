@@ -25,6 +25,7 @@ Helpers for building service items from a pasted agenda.
 import logging
 import re
 import unicodedata
+from datetime import date
 
 from sqlalchemy.sql import func, or_
 
@@ -241,6 +242,7 @@ class AgendaBuilder(object):
     bible_theme = 'PK Textlesung'
     song_theme = 'PK Lieder Petrol Groß'
     final_custom_slide_title = 'Vater unser'
+    weekly_info_custom_slide_title = 'Termine und Infos 2 Seite'
 
     def __init__(self, service_manager):
         self.service_manager = service_manager
@@ -272,6 +274,12 @@ class AgendaBuilder(object):
                 result.added.append(self.final_custom_slide_title)
             else:
                 result.skipped.append('Custom slide not found: %s' % self.final_custom_slide_title)
+            weekly_info_item = self._build_weekly_info_service_item()
+            if weekly_info_item:
+                service_items.append(weekly_info_item)
+                result.added.append(self.weekly_info_custom_slide_title)
+            else:
+                result.skipped.append('Custom slide not found: %s' % self.weekly_info_custom_slide_title)
             for index, service_item in enumerate(service_items):
                 self.service_manager.add_service_item(service_item, repaint=index == len(service_items) - 1)
         finally:
@@ -327,6 +335,18 @@ class AgendaBuilder(object):
             return None
         item = plugin.media_item.create_item_from_id(custom_slide.id)
         return plugin.media_item.build_service_item(item, context=ServiceItemContext.Service)
+
+    def _build_weekly_info_service_item(self):
+        """
+        Build the weekly second info slide and fill it for the current calendar week.
+        """
+        service_item = self._build_custom_service_item(self.weekly_info_custom_slide_title)
+        if not service_item:
+            return None
+        weekly_info_text = get_weekly_info_slide_text()
+        service_item._raw_frames = []
+        service_item.add_from_text(weekly_info_text)
+        return service_item
 
     def _build_bible_service_item(self, reference):
         """
@@ -420,3 +440,29 @@ class AgendaBuilder(object):
         if bible in bibles:
             return bible
         return sorted([b for b in bibles.keys() if b])[0]
+
+
+def get_weekly_info_slide_text(today=None):
+    """
+    Return the info slide text for the current ISO week number.
+    """
+    if today is None:
+        today = date.today()
+    week_number = today.isocalendar()[1]
+    if week_number % 2 == 0:
+        return (
+            '{st}So., 10:30 Uhr:{/st}\n'
+            '{b}Gottesdienst{/b} im Deelenhaus, Krämerstraße 8-10\n'
+            '\n'
+            '{st}Mi., 18:30 Uhr:{/st}\n'
+            '{b}Jungschar{/b} \n'
+            '\n'
+            '{b}Kleingruppen{/b} '
+        )
+    return (
+        '{st}So., 10:30 Uhr:{/st}\n'
+        '{b}Gottesdienst{/b} im Deelenhaus, Krämerstraße 8-10\n'
+        '\n'
+        '{st}Mi., 19:30 Uhr:{/st}\n'
+        '{b}Gebet{/b} am Kamp 43'
+    )

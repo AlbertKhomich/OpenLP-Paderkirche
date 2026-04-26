@@ -41,8 +41,12 @@ The agenda builder creates service items with these rules:
   ``Markus 4:1-20`` or ``Markus 2:23-3:6`` and added as Bible items.
 * Bible items added this way receive the service theme ``PK Textlesung``.
 * Unsupported entries such as ``Predigt`` or ``Abendmahl`` are ignored.
-* ``Vater unser`` is always appended at the end if a matching custom slide
-  exists.
+* ``Vater unser`` is always appended after the agenda entries if a matching
+  custom slide exists.
+* ``0 - Termine und Infos 2 Seite`` is appended after ``Vater unser`` if a
+  matching custom slide exists. Its service slide text is filled from the
+  current ISO week number: even weeks show ``Jungschar``/``Kleingruppen`` and
+  odd weeks show ``Gebet``.
 
 If multiple songs or custom slides share the same name, the first match is
 used.
